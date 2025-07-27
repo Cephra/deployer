@@ -1,27 +1,34 @@
 #!/usr/bin/env bash
-
-# exit on failure
 set -euo pipefail
 
-# go home
-cd ~
+# -----------------------------------------------------------------------------
+# Usage: deploy.sh <git-repo-url>
+# -----------------------------------------------------------------------------
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $0 <git-repo-url>" >&2
+    exit 1
+fi
+repo_url=$1
 
-# generate random deployment dir name (prevents race conditions)
-function get_deployment_dir {
-	DEPLOYMENT_DIR=deploy_$(date +%s)_$RANDOM
+deploy_dir=$(mktemp -d "${HOME}/deploy.XXXXXXXXXX") \
+    || { echo "Error: failed to create temp directory" >&2; exit 1; }
+
+cleanup() {
+    rm -rf "$deploy_dir"
 }
-while
-	get_deployment_dir
-	[[ -d "$DEPLOYMENT_DIR" ]]
-do true; done
+trap cleanup EXIT
 
-# clone git 
-git clone --depth 1 "$1" $DEPLOYMENT_DIR
+git clone --depth 1 -- "$repo_url" "$deploy_dir" \
+    || { echo "Error: git clone failed" >&2; exit 1; }
 
-cd $DEPLOYMENT_DIR
+cd "$deploy_dir"
+
+if [[ ! -f "./deploy.sh" ]]; then
+    echo "Error: deploy.sh not found in repository" >&2
+    exit 1
+elif [[ ! -x "./deploy.sh" ]]; then
+    echo "Info: making deploy.sh executable"
+    chmod +x ./deploy.sh
+fi
 
 ./deploy.sh
-
-cd ..
-
-rm -rf $DEPLOYMENT_DIR
