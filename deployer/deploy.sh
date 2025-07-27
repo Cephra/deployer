@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # -----------------------------------------------------------------------------
-# Usage: deploy.sh <git-repo-url>
+# Usage: deploy.sh <git-repo-url> [deploy-arg1 deploy-arg2 ...]
 # -----------------------------------------------------------------------------
-if [[ $# -ne 1 ]]; then
-    echo "Usage: $0 <git-repo-url>" >&2
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <git-repo-url> [args...]" >&2
     exit 1
 fi
 repo_url=$1
